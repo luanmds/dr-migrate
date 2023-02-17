@@ -1,0 +1,16 @@
+{
+  "environments": {
+    "staging": {
+      "host": "dr-staging-host.com",
+      "port": 80,
+      "spaceName": "Staging Main",
+      "managementApiKey": "your-staging-management-api-key"
+    },
+    "production": {
+      "host": "dr-production-host.com",
+      "port": 80,
+      "spaceName": "Production Main",
+      "managementApiKey": "your-production-management-api-key"
+    }
+  }
+}
