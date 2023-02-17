@@ -3,7 +3,7 @@
 
 Follow the below steps to install this package globally. Before you start, you need to have `npm`.
 
-- Download the `dr-migrate-version.tgz` file from [GitHub](https://github.com/decisionrules)
+- Download the `dr-migrate-version.tgz` file from [GitHub](https://github.com/decisionrules/dr-migrate/releases)
 - Open command line and navigate to a directory with the `dr-migrate-version.tgz` file in it
 - `npm init -y`
 - `npm install dr-migrate-version.tgz -g`
