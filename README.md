@@ -23,9 +23,9 @@ Upon every export operation with id `custom-id`, a file called `rules_custom-id_
 
 Upon every import operation with id `custom-id`, all rules from target are exported to a file called `rules_custom-id_target.json`. This happens before any write operations in the target. The file should therefore contain the full image of the rules in the target environment before the import.
 
-If something goes wrong with your import, you can force the rules from the `rules_custom-id_target.json` file back to the target environment and thus recover it, using a command like this:
+If something goes wrong with your import, you can import the rules from the `rules_custom-id_target.json` file back to the target environment and thus recover it. Just copy the file and rename it to `rules_custom-id-2_source.json`. Then force the rules to target using a command like this:
 
-`import --id=custom-id --env=your-target-env --strategy=FORCE_IMPOSE`
+`import --id=custom-id-2 --env=your-target-env --strategy=FORCE_IMPOSE`
 
 Imports performed with `FORCE_IMPOSE` or `FORCE_PUSH` strategy should be used with caution.
 

@@ -68,7 +68,7 @@ export class AccessUtils {
             const dataString = JSON.stringify(data);
             return await fs.writeFile(`tmp/${fileName}.json`, dataString);
         }
-        throw new Error(`File [tmp/${fileName}.json] already exists. Use different id`);
+        throw new Error(`File [${fileName}] already exists. Use different id`);
     }
 
     static async prepareTmpDir() {
