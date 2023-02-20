@@ -9,11 +9,25 @@ import {importCommand} from './import.js'
 import {migrateCommand} from './migrate.js'
 
 import yargs from "yargs";
+import {AccessUtils} from "../src/utils/accessUtils.js";
 const _yargs = yargs(process.argv.slice(2));
 
 
 export const PackageJson = JSON.parse(await readFile(new URL('../package.json', import.meta.url)));
 console.info(chalk.magenta(`\ndr-migrate version ${PackageJson.version}\n`));
+
+const initCommand = {
+    command: 'init',
+    describe: 'Create sample config file',
+    async handler() {
+        try {
+            await AccessUtils.createConfig();
+            console.info(chalk.magenta(`Config file created, check the directory where you are running me\n`));
+        } catch (e) {
+            console.info(chalk.magenta(`Config file [config.json] already exists\n`));
+        }
+    }
+};
 
 const strategiesCommand = {
     command: 'strategies',
@@ -27,7 +41,7 @@ const strategiesCommand = {
     }
 };
 
-const commands = [exportCommand, importCommand, migrateCommand, strategiesCommand];
+const commands = [initCommand, exportCommand, importCommand, migrateCommand, strategiesCommand];
 
 function showHelp() {
     console.info(chalk.magenta(`Use one of the supported commands:\n`));
@@ -50,6 +64,7 @@ const defaultCommand = {
 /**
  * Command definitions
  */
+_yargs.command(initCommand);
 _yargs.command(exportCommand);
 _yargs.command(importCommand);
 _yargs.command(migrateCommand);

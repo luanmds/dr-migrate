@@ -1,7 +1,7 @@
 import https from "https";
 import http from "http";
 import {promises as fs} from "fs";
-import {Methods} from "./models.js";
+import {ConfigSample, Methods} from "./models.js";
 import chalk from "chalk";
 
 
@@ -61,8 +61,28 @@ export class AccessUtils {
     }
 
     static async writeRulesToFile(fileName,data) {
+        await AccessUtils.prepareTmpDir();
         const dataString = JSON.stringify(data);
         return await fs.writeFile(`tmp/${fileName}.json`, dataString);
+    }
+
+    static async prepareTmpDir() {
+        const tmp = './tmp';
+        try {
+            await fs.access(tmp);
+        } catch (error) {
+            await fs.mkdir(tmp);
+        }
+    }
+
+    static async createConfig() {
+        try {
+            await fs.access(`config.json`);
+        } catch (error) {
+            const dataString = JSON.stringify(ConfigSample,null,"\t");
+            return await fs.writeFile(`config.json`, dataString);
+        }
+        throw new Error(`Config file [config.json] already exists`);
     }
 
     static async readConfigFile(fileName) {

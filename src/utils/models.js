@@ -28,3 +28,20 @@ export const MigrationTag = {
     EXTRA: 'EXTRA',
     UPDATED: 'UPDATED',
 }
+
+export const ConfigSample = {
+    "environments": {
+        "staging": {
+            "host": "api.decisionrules.io",
+            "port": 80,
+            "spaceName": "Staging Main",
+            "managementApiKey": "your-staging-management-api-key"
+        },
+        "production": {
+            "host": "api.decisionrules.io",
+            "port": 80,
+            "spaceName": "Production Main",
+            "managementApiKey": "your-production-management-api-key"
+        }
+    }
+}

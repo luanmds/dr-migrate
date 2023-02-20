@@ -1,16 +1,16 @@
 {
-  "environments": {
-    "staging": {
-      "host": "dr-staging-host.com",
-      "port": 80,
-      "spaceName": "Staging Main",
-      "managementApiKey": "your-staging-management-api-key"
-    },
-    "production": {
-      "host": "dr-production-host.com",
-      "port": 80,
-      "spaceName": "Production Main",
-      "managementApiKey": "your-production-management-api-key"
-    }
-  }
+	"environments": {
+		"staging": {
+			"host": "test.api.decisionrules.io",
+			"port": 80,
+			"spaceName": "Staging Main",
+			"managementApiKey": "u92ovC2abyfSvXuRNwPjWfMr2AecuKyqo6YDpTFHttyHi-zP8uVe3ynx6gX07n8f"
+		},
+		"production": {
+			"host": "api.decisionrules.io",
+			"port": 80,
+			"spaceName": "Production Main",
+			"managementApiKey": "quqlCXxMFfjKbK3ILva2i-nosauPhJZi9dFC6cfCU_vr5Bk7RC7IACkxX0NT-gIy"
+		}
+	}
 }
