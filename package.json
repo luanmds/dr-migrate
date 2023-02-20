@@ -1,0 +1,23 @@
+{
+  "name": "dr-migrate",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bin/index.js",
+  "type": "module",
+  "scripts": {
+    "script": "node bin/index.js"
+  },
+  "author": "DecisionRules",
+  "license": "ISC",
+  "bin": {
+    "dr-migrate": "./bin/index.js"
+  },
+  "dependencies": {
+    "chalk": "^5.2.0",
+    "lodash": "^4.17.21",
+    "yargs": "^17.6.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.33.0"
+  }
+}
