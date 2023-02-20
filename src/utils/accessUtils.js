@@ -62,8 +62,13 @@ export class AccessUtils {
 
     static async writeRulesToFile(fileName,data) {
         await AccessUtils.prepareTmpDir();
-        const dataString = JSON.stringify(data);
-        return await fs.writeFile(`tmp/${fileName}.json`, dataString);
+        try {
+            await fs.access(`tmp/${fileName}.json`);
+        } catch (error) {
+            const dataString = JSON.stringify(data);
+            return await fs.writeFile(`tmp/${fileName}.json`, dataString);
+        }
+        throw new Error(`File [tmp/${fileName}.json] already exists. Use different id`);
     }
 
     static async prepareTmpDir() {
