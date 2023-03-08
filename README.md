@@ -1,7 +1,7 @@
 
 # Installation
 
-Follow the below steps to install this package globally. Before you start, you need to have `npm`.
+Follow the below steps to install this package globally. Before you start, you need to have `Node.js` and `npm` installed.
 
 - Download the `dr-migrate-version.tgz` file from [GitHub](https://github.com/decisionrules/dr-migrate/releases)
 - Open command line
