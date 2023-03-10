@@ -1,54 +1,39 @@
-import https from "https";
-import http from "http";
 import {promises as fs} from "fs";
-import {ConfigSample, Methods} from "./models.js";
+import {ConfigSample} from "./models.js";
 import chalk from "chalk";
+import axios from 'axios';
 
 
 export class AccessUtils {
 
     static async callManagementApi(method, environment, path, data = null) {
-        const port = environment.port === 443 ? https : http;
-        const options = {
-            host: environment.host,
-            port: environment.port,
-            path: path,
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + environment.managementApiKey
+        try {
+            const eUrl = (' ' + environment.url).slice(1);
+            if (eUrl.charAt(environment.url.length - 1) === "/") {
+                eUrl.slice(-1);
             }
-        };
-        return new Promise((resolve, reject) => {
-            let output = '';
-            const req = port.request(options, (res) => {
-                res.setEncoding('utf8');
-                res.on('data', (chunk) => {
-                    output += chunk;
-                });
-                res.on('end', () => {
-                    try {
-                        let obj = JSON.parse(output);
-                        resolve(obj);
-                    } catch {
-                        if (method === Methods.GET) {
-                            reject(output);
-                        }
-                        resolve(output);
-                    }
-                });
-            });
-
+            const config = {
+                url: eUrl + path,
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + environment.managementApiKey
+                }
+            }
             if (data) {
-                const dataString = JSON.stringify(data);
-                req.write(dataString);
+                config.data = data;
             }
-
-            req.on('error', (e) => {
-                reject(e);
-            });
-            req.end();
-        });
+            const res = await axios.request(config);
+            if (res.data) {
+                return res.data;
+            }
+            return null;
+        } catch (e) {
+            if (e.response.data) {
+                throw new Error(e.response.data);
+            }
+            throw e;
+        }
     }
 
     static async readRulesFromFile(fileName) {

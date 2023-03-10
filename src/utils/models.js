@@ -1,9 +1,9 @@
 
 export const Methods = {
-    GET: 'GET',
-    POST: 'POST',
-    PUT: 'PUT',
-    DELETE: 'DELETE'
+    GET: 'get',
+    POST: 'post',
+    PUT: 'put',
+    DELETE: 'delete'
 }
 
 export const ImportStrategy = {
@@ -32,14 +32,12 @@ export const MigrationTag = {
 export const ConfigSample = {
     "environments": {
         "staging": {
-            "host": "api.decisionrules.io",
-            "port": 80,
+            "url": "https://api.decisionrules.io",
             "spaceName": "Staging Main",
             "managementApiKey": "your-staging-management-api-key"
         },
         "production": {
-            "host": "api.decisionrules.io",
-            "port": 80,
+            "url": "https://api.decisionrules.io",
             "spaceName": "Production Main",
             "managementApiKey": "your-production-management-api-key"
         }
