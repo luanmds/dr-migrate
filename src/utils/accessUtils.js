@@ -8,9 +8,9 @@ export class AccessUtils {
 
     static async callManagementApi(method, environment, path, data = null) {
         try {
-            const eUrl = (' ' + environment.url).slice(1);
-            if (eUrl.charAt(environment.url.length - 1) === "/") {
-                eUrl.slice(-1);
+            let eUrl = (' ' + environment.url).slice(1);
+            if (eUrl.charAt(eUrl.length - 1) === "/") {
+                eUrl = eUrl.substring(0, eUrl.length - 1);
             }
             const config = {
                 url: eUrl + path,
