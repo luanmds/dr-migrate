@@ -11,10 +11,12 @@ export class Migration {
     configFileName;
     config;
     traceId;
+    debug;
 
-    constructor(traceId,configFileName) {
+    constructor(traceId,configFileName,debug = false) {
         this.configFileName = configFileName;
         this.traceId = traceId;
+        this.debug = debug;
     }
 
     async init() {
@@ -68,21 +70,36 @@ export class Migration {
             const targetRules = await AccessUtils.readRulesFromFile(targetFileName);
             console.info(chalk.magenta(`[${this.traceId}] Target exported to file [${targetFileName}]`));
 
-            const [rulesToAdd, rulesToUpdate, rulesToDelete, stats] = this.mergeRules(sourceRules,targetRules,importStrategy,this.traceId);
+            const [analysis, rulesToAdd, rulesToUpdate, rulesToDelete, stats] = this.mergeRules(sourceRules,targetRules,importStrategy,this.traceId);
 
-            writePhase = true;
+            if (this.debug || importStrategy === ImportStrategy.DRY_RUN) {
+                this.logAnalysis(analysis);
+            }
 
-            if (rulesToDelete.length > 0) {
-                console.info(chalk.magenta(`[${this.traceId}] Deleting rules in target`));
-                await MigrationUtils.deleteRules(target,rulesToDelete);
-            }
-            if (rulesToAdd.length > 0) {
-                console.info(chalk.magenta(`[${this.traceId}] Importing rules to target`));
-                await MigrationUtils.createRules(target,rulesToAdd);
-            }
-            if (rulesToUpdate.length > 0) {
-                console.info(chalk.magenta(`[${this.traceId}] Updating rules in target`));
-                await MigrationUtils.updateRules(target,rulesToUpdate);
+            if (importStrategy !== ImportStrategy.DRY_RUN) {
+                writePhase = true;
+                console.info(chalk.magenta(`[${this.traceId}] Running ----------------------------------------`));
+                if (rulesToDelete.length > 0) {
+                    console.info(chalk.magenta(`[${this.traceId}] DELETE`));
+                    await MigrationUtils.deleteRules(target,rulesToDelete,this.debug);
+                    if(this.debug) {
+                        console.info(chalk.magenta(``));
+                    }
+                }
+                if (rulesToAdd.length > 0) {
+                    console.info(chalk.magenta(`[${this.traceId}] ADD`));
+                    await MigrationUtils.createRules(target,rulesToAdd,this.debug);
+                    if(this.debug) {
+                        console.info(chalk.magenta(``));
+                    }
+                }
+                if (rulesToUpdate.length > 0) {
+                    console.info(chalk.magenta(`[${this.traceId}] UPDATE`));
+                    await MigrationUtils.updateRules(target,rulesToUpdate,this.debug);
+                    if(this.debug) {
+                        console.info(chalk.magenta(``));
+                    }
+                }
             }
 
             this.importSuccessLog(stats);
@@ -100,7 +117,7 @@ export class Migration {
     importSuccessLog(stats) {
         console.info(chalk.magenta(`[${this.traceId}] Import complete!`));
         console.info(chalk.magenta(`[${this.traceId}] Visible volume of SOURCE / TARGET before the import:      ${stats.sourceVolume} / ${stats.targetVolume}`));
-        console.info(chalk.magenta(`[${this.traceId}] SOURCE EXTRA / INTERSECTION (CONFLICTS) / TARGET EXTRA:   ${stats.sourceExtraVolume} / ${stats.intersectionVolume} (${stats.conflictVolume}) / ${stats.targetExtraVolume}`));
+        console.info(chalk.magenta(`[${this.traceId}] SOURCE EXTRA / SAME (CONFLICTS) / TARGET EXTRA:           ${stats.sourceExtraVolume} / ${stats.intersectionVolume} (${stats.conflictVolume}) / ${stats.targetExtraVolume}`));
         console.info(chalk.magenta(`[${this.traceId}] ADDED TO TARGET / UPDATED IN TARGET / DELETED IN TARGET:  ${stats.addedVolume} / ${stats.updatedVolume} / ${stats.deletedVolume}\n`));
     }
 
@@ -114,12 +131,47 @@ export class Migration {
         }
     }
 
+    logAnalysis(analysis) {
+        console.info(chalk.magenta(`\n[${this.traceId}] Analysis ---------------------------------------`));
+        console.info(chalk.magenta(`[${this.traceId}] SOURCE EXTRAS`));
+        if (analysis.sourceExtras.length === 0) {
+            console.info(chalk.magenta(`None`));
+        }
+        for (let rule of analysis.sourceExtras) {
+            MigrationUtils.logRule(rule);
+        }
+        console.info(chalk.magenta(`\n[${this.traceId}] SAME RULES`));
+        if (analysis.sameRules.length === 0) {
+            console.info(chalk.magenta(`None`));
+        }
+        for (let rule of analysis.sameRules) {
+            MigrationUtils.logRule(rule);
+        }
+        console.info(chalk.magenta(`\n[${this.traceId}] CONFLICTS`));
+        if (analysis.conflicts.length === 0) {
+            console.info(chalk.magenta(`None`));
+        }
+        for (let conflict of analysis.conflicts) {
+            MigrationUtils.logRule(conflict.inSource,'SOURCE ');
+            MigrationUtils.logRule(conflict.inTarget,'TARGET ');
+        }
+        console.info(chalk.magenta(`\n[${this.traceId}] TARGET EXTRAS`));
+        if (analysis.targetExtras.length === 0) {
+            console.info(chalk.magenta(`None`));
+        }
+        for (let rule of analysis.targetExtras) {
+            MigrationUtils.logRule(rule);
+        }
+        console.info(chalk.magenta(``));
+    }
+
     mergeRules(sourceRules,targetRules,importStrategy) {
 
         let sameRules;
         let sourceExtras;
         let targetExtras;
 
+        let conflicts = [];
         let rulesToAdd = [];
         const rulesToUpdate = [];
         const rulesToDelete = [];
@@ -143,7 +195,16 @@ export class Migration {
 
                 if (!RuleUtils.ruleComparator(sourceRule,targetRule)) {
                     conflictVolume++;
+                    conflicts.push({
+                        inSource: sourceRule,
+                        inTarget: targetRule
+                    });
+
                     switch (importStrategy) {
+                        case ImportStrategy.DRY_RUN: {
+                            // We do nothing
+                            break;
+                        }
                         case ImportStrategy.NEW_VERSION: {
                             // Note that name or alias can change, which causes a discrepancy
                             // One could add a check for this, but maybe better not use this strategy
@@ -160,6 +221,7 @@ export class Migration {
                             break;
                         }
                         case ImportStrategy.NEW_RULE: {
+                            // This may break processes in the target if rules are called by alias because the alias will be duplicate
                             sourceRule.tags = RuleUtils.updateMigrationTags(sourceRule.tags,MigrationTag.CONFLICT,this.traceId);
                             const ruleIdVariationLength = 12;
                             const naivelyTrimmedTraceId = this.traceId.slice(0,ruleIdVariationLength);
@@ -183,19 +245,21 @@ export class Migration {
                 }
             });
 
-            sourceExtras.forEach((sourceRule) => {
-                sourceRule.tags = RuleUtils.updateMigrationTags(sourceRule.tags,MigrationTag.ADDED,this.traceId);
-                rulesToAdd.push(sourceRule);
-            })
+            if (importStrategy !== ImportStrategy.DRY_RUN) {
+                sourceExtras.forEach((sourceRule) => {
+                    sourceRule.tags = RuleUtils.updateMigrationTags(sourceRule.tags,MigrationTag.ADDED,this.traceId);
+                    rulesToAdd.push(sourceRule);
+                })
 
-            targetExtras.forEach((targetRule) => {
-                if (importStrategy === ImportStrategy.FORCE_IMPOSE) {
-                    rulesToDelete.push(targetRule);
-                } else {
-                    targetRule.tags = RuleUtils.updateMigrationTags(targetRule.tags,MigrationTag.EXTRA,this.traceId);
-                    rulesToUpdate.push(targetRule);
-                }
-            })
+                targetExtras.forEach((targetRule) => {
+                    if (importStrategy === ImportStrategy.FORCE_IMPOSE) {
+                        rulesToDelete.push(targetRule);
+                    } else {
+                        targetRule.tags = RuleUtils.updateMigrationTags(targetRule.tags,MigrationTag.EXTRA,this.traceId);
+                        rulesToUpdate.push(targetRule);
+                    }
+                })
+            }
         } else {
             rulesToAdd = sourceRules;
         }
@@ -212,7 +276,15 @@ export class Migration {
             deletedVolume: rulesToDelete?.length ?? '?'
         }
 
+        const analysis = {
+            sameRules,
+            sourceExtras,
+            targetExtras,
+            conflicts
+        }
+
         return [
+            analysis,
             rulesToAdd,
             rulesToUpdate,
             rulesToDelete,

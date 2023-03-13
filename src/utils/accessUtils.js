@@ -24,12 +24,12 @@ export class AccessUtils {
                 config.data = data;
             }
             const res = await axios.request(config);
-            if (res.data) {
+            if (res?.data) {
                 return res.data;
             }
             return null;
         } catch (e) {
-            if (e.response.data) {
+            if (e?.response?.data) {
                 throw new Error(e.response.data);
             }
             throw e;

@@ -11,7 +11,8 @@ export const ImportStrategy = {
     FORCE_PUSH: 'FORCE_PUSH',
     NEW_RULE: 'NEW_RULE',
     NEW_VERSION: 'NEW_VERSION',
-    NAIVE: 'NAIVE'
+    NAIVE: 'NAIVE',
+    DRY_RUN: 'DRY_RUN'
 }
 
 export const ImportStrategyDescription = {
@@ -20,6 +21,7 @@ export const ImportStrategyDescription = {
     NEW_RULE: 'Imports rules from source, conflicting rules are imported as rules with new rule id',
     NEW_VERSION: 'Imports rules from source, conflicting rules are imported as rules with new version',
     NAIVE: 'Tries to straightforwardly import rules from source without resolving conflicts (may fail)',
+    DRY_RUN: 'Performs analysis of conflicting rules but does not change the target in any way'
 }
 
 export const MigrationTag = {

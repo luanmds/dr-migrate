@@ -1,6 +1,7 @@
 import {Methods} from "./models.js";
 import {AccessUtils} from "./accessUtils.js";
 import {RuleUtils} from "./ruleUtils.js";
+import chalk from "chalk";
 
 
 export class MigrationUtils {
@@ -53,9 +54,12 @@ export class MigrationUtils {
         return items;
     }
 
-    static async createRules(environment, rules) {
+    static async createRules(environment,rules,debug) {
         const results = [];
         for (let rule of rules) {
+            if (debug) {
+                MigrationUtils.logRule(rule);
+            }
             const res = await AccessUtils.callManagementApi(
                 Methods.POST,
                 environment,
@@ -67,9 +71,12 @@ export class MigrationUtils {
         return results;
     }
 
-    static async updateRules(environment,rules) {
+    static async updateRules(environment,rules,debug) {
         const results = [];
         for (let rule of rules) {
+            if (debug) {
+                MigrationUtils.logRule(rule);
+            }
             const path = `/api/${RuleUtils.ruleTypePath(rule.type)}/${RuleUtils.baseId(rule)}/${rule.version}`;
             const res = await AccessUtils.callManagementApi(Methods.PUT, environment, path, rule);
             results.push(res);
@@ -77,13 +84,20 @@ export class MigrationUtils {
         return results;
     }
 
-    static async deleteRules(environment,rules) {
+    static async deleteRules(environment,rules,debug) {
         const results = [];
         for (let rule of rules) {
+            if (debug) {
+                MigrationUtils.logRule(rule);
+            }
             const path = `/api/${RuleUtils.ruleTypePath(rule.type)}/${RuleUtils.baseId(rule)}/${rule.version}`;
             const res = await AccessUtils.callManagementApi(Methods.DELETE, environment, path);
             results.push(res);
         }
         return results;
+    }
+
+    static logRule(rule,prefix = '') {
+        console.info(chalk.magenta(`${prefix}ID=${RuleUtils.baseId(rule)} VERSION=${rule.version} ALIAS=${rule.ruleAlias} NAME=${rule.name}`));
     }
 }
