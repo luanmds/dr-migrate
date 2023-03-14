@@ -12,7 +12,7 @@ export const exportCommand = {
             .option('includeTags', {describe: 'Include rules with one of these tags', type: 'array'})
             .option('excludeTags', {describe: 'Exclude rules with one of these tags', type: 'array'})
             .option('config', {describe: 'Config file name', type: 'string', default: 'config.json'})
-            .option('verbose', {describe: 'Write extensive log in the console', type: 'boolean', default: false})
+            .option('verbose', {describe: 'Write extensive log in the console', type: 'boolean', boolean: true})
             .example(`${PackageJson.name} export --id=ABC123 --env=staging --excludeTags=Hidden`)
             .example(`${PackageJson.name} export --id=ABC123 --env=staging --includeTags="Proc A" "Proc B"`)
             .example(`${PackageJson.name} export --id=ABC123 --env=staging --config=config-alt.json`)

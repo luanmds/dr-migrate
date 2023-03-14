@@ -20,7 +20,7 @@ export const migrateCommand = {
                 choices: Object.keys(ImportStrategy)
             })
             .option('config', {describe: 'Config file name', type: 'string', default: 'config.json'})
-            .option('verbose', {describe: 'Write extensive log in the console', type: 'boolean', default: false})
+            .option('verbose', {describe: 'Write extensive log in the console', type: 'boolean', boolean: true})
             .example(`${PackageJson.name} migrate --id=ABC123 --source=staging --target=production --strategy=NEW_RULE`)
             .example(`${PackageJson.name} migrate --id=ABC123 --source=staging --target=production --excludeTags=Hidden`)
             .example(`${PackageJson.name} migrate --id=ABC123 --source=staging --target=production --config=config-alt.json`)
