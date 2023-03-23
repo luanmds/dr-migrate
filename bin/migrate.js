@@ -28,6 +28,8 @@ export const migrateCommand = {
     handler: async (argv) => {
         const migration = new Migration(argv.id, argv.config, argv.verbose);
         await migration.init();
+
+        migration.startMigration(argv.source,argv.target,argv.strategy);
         await migration.exportRules(argv.source,argv.includeTags,argv.excludeTags);
         await migration.importRules(argv.target,argv.strategy);
     }

@@ -33,14 +33,25 @@ export class Migration {
         return null;
     }
 
+    startMigration(source,target,importStrategy) {
+        console.info(chalk.magenta(`[${this.traceId}] Migration from [${source}] to [${target}] with strategy ${importStrategy} started\n`));
+    }
+
     async exportRules(env,includeTags,excludeTags) {
         try {
             console.info(chalk.magenta(`[${this.traceId}] Export from [${env}] started`));
             const source = this.getEnvironment(env);
             const exportOptions = this.exportOptions(includeTags,excludeTags);
+
+            if(this.debug) {
+                const exportOptionsLog = exportOptions === null ? 'not specified' : JSON.stringify(exportOptions);
+                console.info(chalk.magenta(`[${this.traceId}] Export options ${exportOptionsLog}`));
+            }
+
             const sourceFileName = `rules_${this.traceId}_source`;
 
-            await MigrationUtils.exportRulesToFile(source,exportOptions,sourceFileName);
+            console.info(chalk.magenta(`[${this.traceId}] Going to export source`));
+            await MigrationUtils.exportRulesToFile(source,exportOptions,sourceFileName,this.debug);
             console.info(chalk.magenta(`[${this.traceId}] Source exported to file [${sourceFileName}]`));
 
             const sourceRules = await AccessUtils.readRulesFromFile(sourceFileName);
@@ -66,14 +77,15 @@ export class Migration {
             const sourceRules = await AccessUtils.readRulesFromFile(sourceFileName);
             console.info(chalk.magenta(`[${this.traceId}] Source recovered from file [${sourceFileName}]`));
 
-            await MigrationUtils.exportRulesToFile(target,null,targetFileName);
+            console.info(chalk.magenta(`[${this.traceId}] Going to export target`));
+            await MigrationUtils.exportRulesToFile(target,null,targetFileName,this.debug);
             const targetRules = await AccessUtils.readRulesFromFile(targetFileName);
             console.info(chalk.magenta(`[${this.traceId}] Target exported to file [${targetFileName}]`));
 
             const [analysis, rulesToAdd, rulesToUpdate, rulesToDelete, stats] = this.mergeRules(sourceRules,targetRules,importStrategy,this.traceId);
 
             if (this.debug || importStrategy === ImportStrategy.DRY_RUN) {
-                this.logAnalysis(analysis);
+                this.logAnalysis(analysis, importStrategy);
             }
 
             if (importStrategy !== ImportStrategy.DRY_RUN) {
@@ -131,8 +143,14 @@ export class Migration {
         }
     }
 
-    logAnalysis(analysis) {
+    logAnalysis(analysis, importStrategy) {
         console.info(chalk.magenta(`\n[${this.traceId}] Analysis ---------------------------------------`));
+
+        if (importStrategy === ImportStrategy.NAIVE) {
+            console.info(chalk.magenta(`[${this.traceId}] The used NAIVE strategy does not perform any analysis\n`));
+            return;
+        }
+
         console.info(chalk.magenta(`[${this.traceId}] SOURCE EXTRAS`));
         if (analysis.sourceExtras.length === 0) {
             console.info(chalk.magenta(`None`));
@@ -152,8 +170,8 @@ export class Migration {
             console.info(chalk.magenta(`None`));
         }
         for (let conflict of analysis.conflicts) {
-            MigrationUtils.logRule(conflict.inSource,'SOURCE ');
-            MigrationUtils.logRule(conflict.inTarget,'TARGET ');
+            MigrationUtils.logRule(conflict.inSource,'SOURCE');
+            MigrationUtils.logRule(conflict.inTarget,'TARGET');
         }
         console.info(chalk.magenta(`\n[${this.traceId}] TARGET EXTRAS`));
         if (analysis.targetExtras.length === 0) {

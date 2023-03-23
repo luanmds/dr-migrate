@@ -8,7 +8,7 @@ export class MigrationUtils {
 
     constructor() {}
 
-    static async exportRulesToFile(environment,exportOptions,fileName) {
+    static async exportRulesToFile(environment,exportOptions,fileName,debug) {
         let items = await MigrationUtils.getSpaceItems(environment);
         const requests = [];
         for (let item of items) {
@@ -18,6 +18,11 @@ export class MigrationUtils {
             }
         }
         const rules = await Promise.all(requests);
+        if (debug) {
+            rules.forEach((rule) => {
+                MigrationUtils.logRule(rule,'EXPORT');
+            });
+        }
         await AccessUtils.writeRulesToFile(fileName,rules);
     }
 
@@ -98,6 +103,19 @@ export class MigrationUtils {
     }
 
     static logRule(rule,prefix = '') {
-        console.info(chalk.magenta(`${prefix}ID=${RuleUtils.baseId(rule)} VERSION=${rule.version} ALIAS=${rule.ruleAlias} NAME=${rule.name}`));
+        if (prefix !== '') {
+            prefix += ' ';
+        }
+        if (rule?.baseId || rule?.ruleId || rule?.compositionId) {
+            console.info(chalk.magenta(`${prefix}ID=${RuleUtils.baseId(rule)} VERSION=${rule.version} ALIAS=${rule.ruleAlias} NAME=${rule.name}`));
+        } else {
+            let loggedRule;
+            try {
+                loggedRule = JSON.stringify(rule);
+            } catch {
+                loggedRule = rule;
+            }
+            console.info(chalk.magenta(`${prefix}NO RULE [${loggedRule}]`));
+        }
     }
 }
