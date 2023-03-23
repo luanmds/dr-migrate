@@ -248,6 +248,10 @@ export class Migration {
                             rulesToAdd.push(sourceRule);
                             break;
                         }
+                        case ImportStrategy.CAREFUL: {
+                            // Do nothing with the conflict
+                            break;
+                        }
                         case ImportStrategy.FORCE_PUSH: {
                             sourceRule.tags = RuleUtils.updateMigrationTags(sourceRule.tags,MigrationTag.UPDATED,this.traceId);
                             rulesToUpdate.push(sourceRule);
