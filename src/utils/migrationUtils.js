@@ -1,32 +1,86 @@
-import {Methods} from "./models.js";
-import {AccessUtils} from "./accessUtils.js";
-import {RuleUtils} from "./ruleUtils.js";
+import { Methods } from "./models.js";
+import { AccessUtils } from "./accessUtils.js";
+import { RuleUtils } from "./ruleUtils.js";
 import chalk from "chalk";
 
 
 export class MigrationUtils {
 
-    constructor() {}
+    constructor() { }
 
-    static async exportRulesToFile(environment,exportOptions,fileName,debug) {
+    // RULEFLOW FUNCTIONS
+    static async exportRuleFlowToFile(environment, fileName, ruleFlowId, versionRuleFlow) {     
+        const rule = await MigrationUtils.getRuleFlowByExport(environment, ruleFlowId, versionRuleFlow);
+        MigrationUtils.logRule(rule[0], 'EXPORT');        
+        await AccessUtils.writeRulesToFile(fileName, rule);
+    }
+
+    static async getRuleFlowByExport(environment, ruleFlowId, versionRuleFlow) {
+        const path = `/api/rule-flow/export/${ruleFlowId}/${versionRuleFlow ? versionRuleFlow : ''}`;
+        const res = await AccessUtils.callManagementApi(Methods.GET, environment, path);        
+        if (typeof res !== 'object') {
+            throw new Error(`Get ruleflow with path [${path}] failed, did not get object`);
+        }
+        return res;
+    }
+    
+    static async createRuleFlow(environment, ruleFlowData) {        
+        MigrationUtils.logRule(ruleFlowData, 'CREATE');
+
+        const path =  `/api/${RuleUtils.ruleTypePath(ruleFlowData.type)}/`
+        const res = await AccessUtils.callManagementApi(Methods.POST, environment, path, ruleFlowData);
+        return res;    
+    }
+
+    static async updateRuleFlow(environment, ruleFlowData) {    
+        MigrationUtils.logRule(ruleFlowData, 'UPDATE');
+
+        const path = `/api/${RuleUtils.ruleTypePath(ruleFlowData.type)}/${RuleUtils.baseId(ruleFlowData)}/${ruleFlowData.version}`;
+        const res = await AccessUtils.callManagementApi(Methods.PUT, environment, path, ruleFlowData);
+        return res;
+    }
+
+    static async deleteRuleFlow(environment, rules, debug) {
+        const results = [];
+        for (let rule of rules) {
+            if (debug) {
+                MigrationUtils.logRule(rule);
+            }
+            const path = `/api/${RuleUtils.ruleTypePath(rule.type)}/${RuleUtils.baseId(rule)}`;
+            const res = await AccessUtils.callManagementApi(Methods.DELETE, environment, path);
+            results.push(res);
+        }
+        return results;
+    }
+
+    static async exportRulesToFile(environment, exportOptions, fileName, debug) {
         let items = await MigrationUtils.getSpaceItems(environment);
         const requests = [];
         for (let item of items) {
-            if (MigrationUtils.itemFilter(item,exportOptions)) {
-                const req = MigrationUtils.getRule(environment,item);
+            if (MigrationUtils.itemFilter(item, exportOptions)) {
+                const req = MigrationUtils.getRule(environment, item);
                 requests.push(req);
             }
         }
         const rules = await Promise.all(requests);
         if (debug) {
             rules.forEach((rule) => {
-                MigrationUtils.logRule(rule,'EXPORT');
+                MigrationUtils.logRule(rule, 'EXPORT');
             });
         }
-        await AccessUtils.writeRulesToFile(fileName,rules);
+        await AccessUtils.writeRulesToFile(fileName, rules);
     }
 
-    static itemFilter(item,exportOptions) {
+    static async getRule(environment, ruleInfo) {
+        const path = `/api/${RuleUtils.ruleTypePath(ruleInfo.type)}/${RuleUtils.baseId(ruleInfo)}/${ruleInfo.version}`;
+        const res = await AccessUtils.callManagementApi(Methods.GET, environment, path);
+        if (typeof res !== 'object') {
+            throw new Error(`Get rule with path [${path}] failed, did not get object`);
+        }
+        return res;
+    }
+
+    static itemFilter(item, exportOptions) {
         if (!exportOptions) {
             return true;
         }
@@ -41,15 +95,6 @@ export class MigrationUtils {
         return includeTagsPass && excludeTagsPass;
     }
 
-    static async getRule(environment,ruleInfo) {
-        const path = `/api/${RuleUtils.ruleTypePath(ruleInfo.type)}/${RuleUtils.baseId(ruleInfo)}/${ruleInfo.version}`;
-        const res = await AccessUtils.callManagementApi(Methods.GET, environment, path);
-        if (typeof res !== 'object') {
-            throw new Error(`Get rule with path [${path}] failed, did not get object`);
-        }
-        return res;
-    }
-
     static async getSpaceItems(environment) {
         const path = `/api/space/items`;
         const items = await AccessUtils.callManagementApi(Methods.GET, environment, path);
@@ -59,7 +104,7 @@ export class MigrationUtils {
         return items;
     }
 
-    static async createRules(environment,rules,debug) {
+    static async createRules(environment, rules, debug) {
         const results = [];
         for (let rule of rules) {
             if (debug) {
@@ -70,13 +115,13 @@ export class MigrationUtils {
                 environment,
                 `/api/${RuleUtils.ruleTypePath(rule.type)}/`,
                 rule
-            );
+            );            
             results.push(res);
         }
         return results;
     }
 
-    static async updateRules(environment,rules,debug) {
+    static async updateRules(environment, rules, debug) {
         const results = [];
         for (let rule of rules) {
             if (debug) {
@@ -89,25 +134,25 @@ export class MigrationUtils {
         return results;
     }
 
-    static async deleteRules(environment,rules,debug) {
+    static async deleteRules(environment, rules, debug, ignoreVersion = false) {
         const results = [];
         for (let rule of rules) {
             if (debug) {
                 MigrationUtils.logRule(rule);
             }
-            const path = `/api/${RuleUtils.ruleTypePath(rule.type)}/${RuleUtils.baseId(rule)}/${rule.version}`;
+            const path = `/api/${RuleUtils.ruleTypePath(rule.type)}/${RuleUtils.baseId(rule)}/${ignoreVersion? '' : rule.version}`;
             const res = await AccessUtils.callManagementApi(Methods.DELETE, environment, path);
             results.push(res);
         }
         return results;
     }
 
-    static logRule(rule,prefix = '') {
+    static logRule(rule, prefix = '') {
         if (prefix !== '') {
             prefix += ' ';
         }
         if (rule?.baseId || rule?.ruleId || rule?.compositionId) {
-            console.info(chalk.magenta(`${prefix}ID=${RuleUtils.baseId(rule)} VERSION=${rule.version} ALIAS=${rule.ruleAlias} NAME=${rule.name}`));
+            console.info(chalk.blue(`${prefix}ID=${RuleUtils.baseId(rule)} VERSION=${rule.version} ALIAS=${rule.ruleAlias} NAME=${rule.name} TYPE=${rule.type}` ));
         } else {
             let loggedRule;
             try {
@@ -115,7 +160,7 @@ export class MigrationUtils {
             } catch {
                 loggedRule = rule;
             }
-            console.info(chalk.magenta(`${prefix}NO RULE [${loggedRule}]`));
+            console.info(chalk.blue(`${prefix}NO RULE [${loggedRule}]`));
         }
     }
 }

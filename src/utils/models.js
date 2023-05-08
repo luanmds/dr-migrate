@@ -26,6 +26,24 @@ export const ImportStrategyDescription = {
     DRY_RUN: 'Performs analysis of conflicting rules but does not change the target in any way'
 }
 
+export const ImportRuleFlowStrategy = {
+    RULEFLOW_UPDATE_DRY_RUN: 'RULEFLOW_UPDATE_DRY_RUN',
+    RULEFLOW_NEW_VERSION_DRY_RUN: 'RULEFLOW_NEW_VERSION_DRY_RUN',
+    RULEFLOW_NEW_RULE_DRY_RUN: 'RULEFLOW_NEW_RULE_DRY_RUN',
+    RULEFLOW_UPDATE: 'RULEFLOW_UPDATE',
+    RULEFLOW_NEW_VERSION: 'RULEFLOW_NEW_VERSION',
+    RULEFLOW_NEW_RULE: 'RULEFLOW_NEW_RULE'
+}
+
+export const ImportRuleFlowStrategyDescription = {
+    RULEFLOW_UPDATE_DRY_RUN: 'Performs analysis of conflicting ruleflows but does not change the target in any way',
+    RULEFLOW_NEW_VERSION_DRY_RUN: 'Performs analysis of conflicting ruleflows but does not change the target in any way',
+    RULEFLOW_NEW_RULE_DRY_RUN: 'Performs analysis of conflicting ruleflows but does not change the target in any way',
+    RULEFLOW_UPDATE: 'Only import RuleFlows! Imports a RuleFlow from the source and update it',
+    RULEFLOW_NEW_VERSION: 'Only import RuleFlows! Imports a RuleFlow from the source, create the rule with a new version',
+    RULEFLOW_NEW_RULE: 'Only import RuleFlows! Imports a new RuleFlow from the source, create the rule with version 1',
+}
+
 export const MigrationTag = {
     ADDED: 'ADDED',
     CONFLICT: 'CONFLICT',

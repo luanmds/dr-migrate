@@ -30,7 +30,11 @@ export class AccessUtils {
             return null;
         } catch (e) {
             if (e?.response?.data) {
-                throw new Error(e.response.data);
+                let res = {
+                    statusCode: e.response.status,
+                    data: e.response.data
+                }
+                throw new Error(JSON.stringify(res));
             }
             throw e;
         }
@@ -45,6 +49,11 @@ export class AccessUtils {
         return rules;
     }
 
+    static async readRuleFlowFromFile(fileName) {
+        const ruleFromFile = await fs.readFile(`tmp/${fileName}.json`, 'utf8');
+        return JSON.parse(ruleFromFile);
+    }
+
     static async writeRulesToFile(fileName,data) {
         await AccessUtils.prepareTmpDir();
         try {
@@ -54,6 +63,10 @@ export class AccessUtils {
             return await fs.writeFile(`tmp/${fileName}.json`, dataString);
         }
         throw new Error(`File [${fileName}] already exists. Use different id`);
+    }
+
+    static async deleteRulesToFile(fileName) {
+        await fs.unlink(`tmp/${fileName}.json`);
     }
 
     static async prepareTmpDir() {
